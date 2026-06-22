@@ -38,14 +38,15 @@ try{
         Get-PrinterDriver|Select-Object Name,Manufacturer,MajorVersion,DriverPath|
             Export-Csv (Join-Path $runPath 'Drivers.csv') -NoTypeInformation
 
-        foreach($port in Get-PrinterPort|Where-Object PrinterHostAddress){
+        $connectivity=foreach($port in Get-PrinterPort|Where-Object{$_.PrinterHostAddress}){
             try{
                 $test=Test-NetConnection -ComputerName $port.PrinterHostAddress -Port 9100 -WarningAction SilentlyContinue
                 [pscustomobject]@{Port=$port.Name;Address=$port.PrinterHostAddress;Tcp9100=$test.TcpTestSucceeded}
             }catch{
                 $warnings.Add("Port $($port.Name): $($_.Exception.Message)")
             }
-        }|Export-Csv (Join-Path $runPath 'PrinterConnectivity.csv') -NoTypeInformation
+        }
+        $connectivity|Export-Csv (Join-Path $runPath 'PrinterConnectivity.csv') -NoTypeInformation
     }else{
         $warnings.Add('PrintManagement cmdlets are unavailable.')
     }
